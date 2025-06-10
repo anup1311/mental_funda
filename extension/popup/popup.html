@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StockDocs Scanner & Analyzer</title>
+    <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <img src="../icons/icon48.png" alt="Logo" class="logo">
+            <h1>StockDocs Analyzer</h1>
+        </header>
+
+        <div class="tab-navigation">
+            <button class="tab-link active" data-tab="downloader">Downloader</button>
+            <button class="tab-link" data-tab="analysis">Analysis & Charts</button>
+        </div>
+
+        <!-- Downloader Tab Content -->
+        <div id="downloader-tab" class="tab-content active">
+            <div id="initial-view">
+                <p id="status-message">Detecting documents...</p>
+                <div id="detected-urls-container" style="display:none;">
+                    <h2>Select Documents to Download:</h2>
+                    <p class="info-text">📄 Annual Reports, 📋 Transcripts, and 📊 Presentations</p>
+                    <ul id="urls-list"></ul>
+                    <button id="download-button" class="button-primary" disabled>Download Selected</button>
+                </div>
+                <button id="rescan-button" class="button-secondary">Re-scan Page</button>
+            </div>
+            <div id="loading-view" style="display:none;">
+                <div class="spinner"></div>
+                <p>Downloading documents...</p>
+            </div>
+            <div id="results-view" style="display:none;">
+                <h2>Download Results</h2>
+                <div id="analysis-results-content"></div>
+                <button id="back-to-scan-button" class="button-secondary">Scan New Page</button>
+            </div>
+            <div id="error-view" class="error-message" style="display:none;">
+                <h2>Error</h2>
+                <p id="error-message-text"></p>
+                <button id="retry-button" class="button-secondary" style="display:none;">Retry</button>
+                <button id="back-to-scan-from-error-button" class="button-secondary">Back</button>
+            </div>
+        </div>
+
+        <!-- Analysis & Charts Tab Content -->
+        <div id="analysis-tab" class="tab-content">
+            <h2>On-Page Toolkit</h2>
+            <p class="info-text">Control the charts and AI analysis modules injected onto the Screener.in page.</p>
+            <button id="inject-ui-button" class="button-primary">Inject Charts & Analysis UI</button>
+            <p id="inject-status" class="status-text"></p>
+            
+            <div class="settings-section">
+                <h3>Settings</h3>
+                <p class="info-text">Your API key is stored locally and securely in your browser.</p>
+                <div class="input-group">
+                    <label for="api-key-input">Gemini API Key</label>
+                    <input type="password" id="api-key-input" placeholder="Enter your Gemini API key">
+                    <button id="save-api-key-button" class="button-secondary">Save</button>
+                </div>
+                <p id="api-key-status" class="status-text"></p>
+            </div>
+        </div>
+    </div>
+    <script src="popup.js"></script>
+</body>
+</html>

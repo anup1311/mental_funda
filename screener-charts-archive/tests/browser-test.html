@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Screener.in Extension Browser Tests</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+        .test-suite {
+            margin-bottom: 30px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+        }
+        .test-case {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .success {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+        .failure {
+            background: #ffebee;
+            color: #c62828;
+        }
+        .pending {
+            background: #fff3e0;
+            color: #ef6c00;
+        }
+        button {
+            background: #1976d2;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #1565c0;
+        }
+        .test-input {
+            margin: 10px 0;
+            padding: 8px;
+            width: 100%;
+            max-width: 300px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Screener.in Extension Browser Tests</h1>
+    
+    <div class="test-suite">
+        <h2>1. Data Extraction Tests</h2>
+        <button onclick="runDataExtractionTests()">Run Tests</button>
+        <div id="dataExtractionResults"></div>
+    </div>
+
+    <div class="test-suite">
+        <h2>2. API Key Management Tests</h2>
+        <input type="text" id="testApiKey" class="test-input" placeholder="Enter test API key">
+        <button onclick="runApiKeyTests()">Run Tests</button>
+        <div id="apiKeyResults"></div>
+    </div>
+
+    <div class="test-suite">
+        <h2>3. API Service Tests</h2>
+        <button onclick="runApiServiceTests()">Run Tests</button>
+        <div id="apiServiceResults"></div>
+    </div>
+
+    <!-- Import Chart.js first -->
+    <script src="../chart.min.js"></script>
+    
+    <!-- Import content.js -->
+    <script src="../content.js"></script>
+
+    <script type="module">
+        // Test utilities
+        function addTestResult(containerId, testName, passed, message) {
+            const container = document.getElementById(containerId);
+            const div = document.createElement('div');
+            div.className = `test-case ${passed ? 'success' : 'failure'}`;
+            div.textContent = `${testName}: ${message}`;
+            container.appendChild(div);
+        }
+
+        // Mock DOM for data extraction tests
+        function setupTestDOM() {
+            // Create a mock P&L table
+            const plTable = document.createElement('table');
+            plTable.className = 'data-table';
+            plTable.innerHTML = `
+                <thead>
+                    <tr>
+                        <th>Particulars</th>
+                        <th>2023</th>
+                        <th>2022</th>
+                        <th>2021</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Sales</td>
+                        <td>1000</td>
+                        <td>800</td>
+                        <td>600</td>
+                    </tr>
+                    <tr>
+                        <td>Net Profit</td>
+                        <td>100</td>
+                        <td>80</td>
+                        <td>60</td>
+                    </tr>
+                </tbody>
+            `;
+
+            // Create a mock Quarterly Results table
+            const qrTable = document.createElement('table');
+            qrTable.className = 'data-table';
+            qrTable.innerHTML = `
+                <thead>
+                    <tr>
+                        <th>Particulars</th>
+                        <th>Mar 2023</th>
+                        <th>Dec 2022</th>
+                        <th>Sep 2022</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Sales</td>
+                        <td>250</td>
+                        <td>200</td>
+                        <td>180</td>
+                    </tr>
+                    <tr>
+                        <td>Net Profit</td>
+                        <td>25</td>
+                        <td>20</td>
+                        <td>18</td>
+                    </tr>
+                </tbody>
+            `;
+
+            // Create sections and add tables
+            const plSection = document.createElement('section');
+            plSection.id = 'profit-loss';
+            plSection.appendChild(plTable);
+
+            const qrSection = document.createElement('section');
+            qrSection.id = 'quarters';
+            qrSection.appendChild(qrTable);
+
+            // Add to document
+            document.body.appendChild(plSection);
+            document.body.appendChild(qrSection);
+        }
+
+        // Mock chrome.storage API for testing
+        window.chrome = {
+            storage: {
+                sync: {
+                    get: (key, callback) => {
+                        const data = localStorage.getItem(key);
+                        callback({ [key]: data });
+                    },
+                    set: (data, callback) => {
+                        Object.entries(data).forEach(([key, value]) => {
+                            localStorage.setItem(key, value);
+                        });
+                        callback();
+                    }
+                }
+            }
+        };
+
+        // Mock rate limiter
+        class RateLimiter {
+            constructor(limit = 10, interval = 60000) {
+                this.limit = limit;
+                this.interval = interval;
+                this.requests = [];
+            }
+
+            async checkLimit() {
+                const now = Date.now();
+                this.requests = this.requests.filter(time => time > now - this.interval);
+                
+                if (this.requests.length >= this.limit) {
+                    throw new Error('Rate limit exceeded');
+                }
+                
+                this.requests.push(now);
+            }
+        }
+
+        const rateLimiter = new RateLimiter(10, 60000);
+
+        // 1. Data Extraction Tests
+        window.runDataExtractionTests = async () => {
+            const results = document.getElementById('dataExtractionResults');
+            results.innerHTML = '';
+
+            try {
+                // Setup test DOM
+                setupTestDOM();
+
+                // Test quarterly data extraction
+                const quarterlyData = extractQuarterlyData();
+                addTestResult(
+                    'dataExtractionResults',
+                    'Quarterly Data Extraction',
+                    quarterlyData !== null && quarterlyData.quarters.length > 0,
+                    quarterlyData ? 'Successfully extracted quarterly data' : 'Failed to extract data'
+                );
+
+                // Test P&L data extraction
+                const plData = extractPL();
+                addTestResult(
+                    'dataExtractionResults',
+                    'P&L Data Extraction',
+                    plData !== null && plData.years.length > 0,
+                    plData ? 'Successfully extracted P&L data' : 'Failed to extract data'
+                );
+
+            } catch (error) {
+                addTestResult(
+                    'dataExtractionResults',
+                    'Data Extraction',
+                    false,
+                    `Error: ${error.message}`
+                );
+            }
+        };
+
+        // 2. API Key Management Tests
+        window.runApiKeyTests = async () => {
+            const results = document.getElementById('apiKeyResults');
+            results.innerHTML = '';
+            const testKey = document.getElementById('testApiKey').value;
+
+            try {
+                // Test API key storage
+                await chrome.storage.sync.set({ 'llmApiKey': testKey }, () => {
+                    addTestResult(
+                        'apiKeyResults',
+                        'API Key Storage',
+                        true,
+                        'Successfully stored API key'
+                    );
+                });
+
+                // Test API key retrieval
+                await chrome.storage.sync.get('llmApiKey', (result) => {
+                    const retrieved = result.llmApiKey === testKey;
+                    addTestResult(
+                        'apiKeyResults',
+                        'API Key Retrieval',
+                        retrieved,
+                        retrieved ? 'Successfully retrieved API key' : 'Failed to retrieve correct API key'
+                    );
+                });
+
+            } catch (error) {
+                addTestResult(
+                    'apiKeyResults',
+                    'API Key Management',
+                    false,
+                    `Error: ${error.message}`
+                );
+            }
+        };
+
+        // 3. API Service Tests
+        window.runApiServiceTests = async () => {
+            const results = document.getElementById('apiServiceResults');
+            results.innerHTML = '';
+
+            try {
+                // Test rate limiting
+                let rateLimitPassed = false;
+                try {
+                    for (let i = 0; i < 11; i++) {
+                        await rateLimiter.checkLimit();
+                    }
+                } catch (error) {
+                    rateLimitPassed = error.message.includes('Rate limit exceeded');
+                }
+                addTestResult(
+                    'apiServiceResults',
+                    'Rate Limiting',
+                    rateLimitPassed,
+                    rateLimitPassed ? 'Rate limiting working correctly' : 'Rate limiting test failed'
+                );
+
+                // Test response caching
+                const testData = { id: 'test123', data: 'test' };
+                const testResponse = { analysis: 'test analysis' };
+                localStorage.setItem('cache_' + JSON.stringify(testData), JSON.stringify({
+                    timestamp: Date.now(),
+                    data: testResponse
+                }));
+
+                const cached = JSON.parse(localStorage.getItem('cache_' + JSON.stringify(testData)));
+                addTestResult(
+                    'apiServiceResults',
+                    'Response Caching',
+                    cached !== null,
+                    cached ? 'Cache mechanism working correctly' : 'Cache test failed'
+                );
+
+            } catch (error) {
+                addTestResult(
+                    'apiServiceResults',
+                    'API Service',
+                    false,
+                    `Error: ${error.message}`
+                );
+            }
+        };
+
+        // Initialize tests
+        document.addEventListener('DOMContentLoaded', () => {
+            // Clear any previous test data
+            localStorage.clear();
+        });
+    </script>
+</body>
+</html> 

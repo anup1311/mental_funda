@@ -1,0 +1,11 @@
+{
+  "name": "screener-analyzer-backend",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Backend for StockDocs Scanner & Analyzer Chrome Extension",
+  "dependencies": {
+    "@google/generative-ai": "^0.11.3",
+    "archiver": "^7.0.0",
+    "axios": "^1.7.2"
+  }
+}

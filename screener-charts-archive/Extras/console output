@@ -1,0 +1,24 @@
+[ContentMain]
+ContentMain.js:18 [ContentService] document.readyState: loading
+ContentMain.js:5 [ContentService.ExportExtensionIdForStudioWeb]
+script.pageview-props.tagged-events.js:1 
+        
+        
+       Failed to load resource: net::ERR_BLOCKED_BY_CLIENT
+pwa.933118758337.js:20 setupA2HS
+ContentMain.js:5 [ContentService.SetContentInitData] target: { TabId: 176313795, FrameId: 0}
+consolidated/:1 Banner not shown: beforeinstallpromptevent.preventDefault() called. The page must call beforeinstallpromptevent.prompt() to show the banner.
+
+Error with Permissions-Policy header: Unrecognized feature: 'browsing-topics'.
+Error with Permissions-Policy header: Origin trial controlled feature not enabled: 'private-state-token-redemption'.
+Error with Permissions-Policy header: Origin trial controlled feature not enabled: 'private-state-token-issuance'.
+ContentMain.js:18 [ContentMain]
+ContentMain.js:18 [ContentService] document.readyState: loading
+ContentMain.js:5 [ContentService.ExportExtensionIdForStudioWeb]
+consolidated/:18 
+        
+        
+       GET https://plausible.screener.in/js/script.pageview-props.tagged-events.js net::ERR_BLOCKED_BY_CLIENT
+ContentMain.js:5 [ContentService.SetContentInitData] target: { TabId: 176313795, FrameId: 0}
+pwa.933118758337.js:20 setupA2HS
+consolidated/:1 Banner not shown: beforeinstallpromptevent.preventDefault() called. The page must call beforeinstallpromptevent.prompt() to show the banner.
